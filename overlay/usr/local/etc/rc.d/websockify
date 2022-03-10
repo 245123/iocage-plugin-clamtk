@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# PROVIDE: websockify
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# websockify_enable (bool):	Set to NO by default.
+#			Set it to YES to enable it.
+# websockify_dir:	Directory where websockify lives.
+#			Default: /usr/local/websockify
+
+. /etc/rc.subr
+
+NOVNC=/usr/local/libexec/novnc/
+PEM=${NOVNC}utils/websockify/self.pem
+
+name="websockify"
+rcvar=${name}_enable
+
+load_rc_config ${name}
+
+: ${websockify_enable:="NO"}
+: ${websockify_user:="root"}
+: ${websockify_group:="wheel"}
+: ${websockify_dir:="${NOVNC}utils/websockify"}
+
+stop_cmd="websockify_stop"
+status_cmd="websockify_status"
+
+pidfile="/var/run/websockify/${name}.pid"
+
+command="websockify --web=${NOVNC} --cert=${PEM} 6080 localhost:5900"
+
+#start_cmd="/usr/sbin/daemon -p ${pidfile} -u ${websockify_user} -r -f $command"
+start_cmd="daemon -u ${websockify_user} -P ${pidfile} -f ${command}"
+start_precmd="websockify_prestart"
+
+websockify_prestart() {
+	if [ -f ${pidfile} ]; then
+		rm -f ${pidfile}
+		echo "Removing stale pidfile."
+	elif [ ! -d ${pidfile%/*} ]; then
+		echo "install."
+		install -d -o ${websockify_user} ${pidfile%/*}
+	fi
+}
+
+websockify_stop() {
+	if [ -e "${pidfile}" ]; then
+		kill -s TERM `cat ${pidfile}`
+	else
+		echo "${name} is not running"
+	fi
+}
+
+websockify_status() {
+	if [ -e "${pidfile}" ]; then
+		echo "${name} is running as pid `cat ${pidfile}`"
+	else
+		echo "${name} is not running"
+	fi
+}
+
+run_rc_command "$1"

@@ -19,7 +19,7 @@ freshclam
 service clamav-freshclam start 2>/dev/null
 service clamav-clamd start 2>/dev/null
 
-ln -s /usr/local/bin/python3.8 /usr/local/bin/python
+ln -s /usr/local/bin/python3.9 /usr/local/bin/python
 
 cp /usr/local/libexec/novnc/vnc_lite.html /usr/local/libexec/novnc/index.html
 
